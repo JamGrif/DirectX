@@ -45,6 +45,7 @@ bool Application::Start()
 		wc.cbWndExtra = 0;																				// ^
 		wc.hInstance = m_hInst;																			// Handle to the application instance
 		wc.hIcon = (HICON)LoadImage(NULL, "res/icon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);				// Specify handle to an icon for the window 
+		wc.hIconSm = (HICON)LoadImage(NULL, "res/icon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);														// Specify handle to a cursor to use when cursor is over windows client area.
 		wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);											// Specify handle to a brush which specifies background color for client area. GetStockObject returns handle to a prebuilt white coloured brush
 		wc.lpszMenuName = 0;																			// Specify windows menu. 0 as no menu in application

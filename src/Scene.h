@@ -30,6 +30,12 @@ private:
 	Mesh* sphere;
 	Mesh* pointy;
 
+	Mesh* test1;
+	Mesh* test2;
+	Mesh* test3;
+	Mesh* test4;
+	Mesh* test5;
+
 	LightManager* lightmanager;
 
 };

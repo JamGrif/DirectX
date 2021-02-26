@@ -19,6 +19,7 @@ public:
 	void Forward(float distance); 
 	void Strafe(float distance);
 
+	XMFLOAT3 GetPosition();
 	XMMATRIX GetViewMatrix();
 
 

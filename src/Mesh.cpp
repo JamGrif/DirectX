@@ -6,6 +6,8 @@ Mesh::Mesh()
 	LoadMesh((char*)"res/mesh/cube.obj");						//Loads cube mesh by default - Fills vertex buffer
 	SetupMesh();												//Sets up properties to render the mesh
 	AddTexture((char*)"res/textures/NOASSIGNEDTEXTURE.png");	//Loads NOASSIGNEDTEXTURE.png by default
+
+	
 }
 
 Mesh::~Mesh()
@@ -16,7 +18,7 @@ Mesh::~Mesh()
 	SafeRelease(m_pcbPerObject);
 	SafeRelease(m_pcbPerFrame);
 
-	SafeRelease(m_pTexture);
+	//SafeRelease(m_pTexture);
 	SafeRelease(m_pSampler);
 
 	m_currentState = nullptr;
@@ -25,10 +27,6 @@ Mesh::~Mesh()
 	m_currentInputLayout = nullptr;
 
 	SafeRelease(m_pVertexBuffer);
-
-	
-	
-	
 
 
 }
@@ -56,9 +54,23 @@ void Mesh::Draw()
 	//XMMATRIX inverse;
 	//inverse = XMMatrixInverse(&determinant, world);
 
+	XMMATRIX A = world;
+	A.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR det = XMMatrixDeterminant(A);
+	XMMATRIX inverse = XMMatrixTranspose(XMMatrixInverse(&det, A));
+
+
 	m_pLocalContext->IASetInputLayout(m_currentInputLayout); // Bind input layout to device
 
+	//Set constant buffer values
+
 	m_object_cb_values.WorldViewProjection = world * (EngineStatics::GetCamera()->GetViewMatrix()) * (EngineStatics::GetProjectionMatrix());
+	m_object_cb_values.WorldMatrix = world;
+	m_object_cb_values.WorldInvTransposeMatrix = inverse;
+	m_object_cb_values.material = meshMaterial;
+
+	m_frame_cb_values.DirLight = *EngineStatics::GetLightManager()->GetDirectionalLight();
+	m_frame_cb_values.position = EngineStatics::GetCamera()->GetPosition();
 
 	D3D11_MAPPED_SUBRESOURCE ms;
 	//Update and set OBJECT constant buffer
@@ -67,18 +79,20 @@ void Mesh::Draw()
 	memcpy(ms.pData, &m_object_cb_values, sizeof(PerObject_CONSTANT_BUFFER));		//Copy data in	
 	m_pLocalContext->Unmap(m_pcbPerObject, NULL);									//Unlock buffer
 	m_pLocalContext->VSSetConstantBuffers(0, 1, &m_pcbPerObject);					//Set the constant buffer
+	//m_pLocalContext->PSSetConstantBuffers(0, 1, &m_pcbPerObject);
 
+	D3D11_MAPPED_SUBRESOURCE ms2;
 	//Update and set FRAME constant buffer 
-	m_pLocalContext->Map(m_pcbPerFrame, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-	memcpy(ms.pData, &m_frame_cb_values, sizeof(PerFrame_CONSTANT_BUFFER));
+	m_pLocalContext->Map(m_pcbPerFrame, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms2);
+	memcpy(ms2.pData, &m_frame_cb_values, sizeof(PerFrame_CONSTANT_BUFFER));
 	m_pLocalContext->Unmap(m_pcbPerFrame, NULL);
 	m_pLocalContext->VSSetConstantBuffers(1, 1, &m_pcbPerFrame);
-
+	//m_pLocalContext->PSSetConstantBuffers(1, 1, &m_pcbPerObject);
 	//Map / Unmap is required for D3D11_USAGE_DYNAMIC
 
 
 	m_pLocalContext->PSSetSamplers(0, 1, &m_pSampler);
-	m_pLocalContext->PSSetShaderResources(0, 1, &m_pTexture);
+	m_pLocalContext->PSSetShaderResources(0, 1, &m_pLocalTexture);
 
 	m_pLocalContext->VSSetShader(m_currentVShader, 0, 0);
 	m_pLocalContext->PSSetShader(m_currentPShader, 0, 0);
@@ -97,19 +111,31 @@ HRESULT Mesh::AddTexture(char* filename)
 {
 	HRESULT hr{ S_OK };
 
-	SafeRelease(m_pTexture);
+	//SafeRelease(m_pLocalTexture);
 
-	hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, filename, NULL, NULL, &m_pTexture, NULL);
+	//if (m_pLocalTexture != nullptr)
+	//{
+	//	m_pLocalTexture->Release();
+	//	m_pLocalTexture = nullptr;
+	//}
+	
 
+	std::string test = "hello";
+	
+	//hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, test.c_str(), NULL, NULL, &m_pTexture, NULL);
+	hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, filename, NULL, NULL, &m_pLocalTexture, NULL);
+	
 	if (hr == D3D11_ERROR_FILE_NOT_FOUND)
 	{
-		hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, "res/textures/MISSINGTEXTURE.png", NULL, NULL, &m_pTexture, NULL);
+		hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, "res/textures/MISSINGTEXTURE.png", NULL, NULL, &m_pLocalTexture, NULL);
 	}
-
+	
 	if (FAILED(hr))
 	{
 		return hr;
 	}
+
+	m_pLocalTexture = EngineStatics::GetRenderer()->GetTextureManager()->GetTexture(filename);
 
 	return S_OK;
 }
@@ -153,7 +179,8 @@ void Mesh::SetupMesh()
 	sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
+	sampler_desc.MinLOD = 0;
+	sampler_desc.MaxLOD = 0;
 
 	HR(m_pLocalDevice->CreateSamplerState(&sampler_desc, &m_pSampler));
 

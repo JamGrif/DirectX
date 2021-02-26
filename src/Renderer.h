@@ -12,6 +12,31 @@ using namespace DirectX;
 #include "CoreObject.h"
 #include "EngineStatics.h"
 
+class TextureManager
+{
+public:
+    TextureManager();
+    ~TextureManager();
+
+    ID3D11ShaderResourceView* GetTexture(char* filename);
+
+
+private:
+
+    ID3D11ShaderResourceView* SaveTexture(char* filename);
+
+    struct TextureStruct
+    {
+        char* Address;
+        ID3D11ShaderResourceView* Texture;
+    };
+
+    std::vector<TextureStruct*> textureAtlas;
+    TextureStruct* t;
+
+
+};
+
 enum rasterizerStates
 {
     RDefault = 0,
@@ -47,6 +72,8 @@ public:
     ID3D11PixelShader* GetPixelShader(Shaders shader = SDefault);
 
     ID3D11InputLayout* GetInputLayout(InputLayouts input = IDefault);
+
+    TextureManager* GetTextureManager();
 
 
 private:
@@ -87,5 +114,12 @@ private:
     std::vector<ID3D11InputLayout*> InputLayoutList;
     ID3D11InputLayout* m_pDefaultInputLayout;
 
+    //Texture mananger
+    TextureManager* textureManager;
+
 };
+
+
+
+
 

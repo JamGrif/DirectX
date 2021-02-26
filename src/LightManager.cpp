@@ -22,11 +22,11 @@ void LightManager::CreatePointLight(float x, float y, float z)
 
 }
 
-void LightManager::CreateDirectionalLight()
+void LightManager::CreateDirectionalLight(float x, float y, float z)
 {
 	if (directionalLight == nullptr)
 	{
-		directionalLight = new DirectionalLight();
+		directionalLight = new DirectionalLight(x, y, z);
 	}
 }
 

@@ -9,9 +9,6 @@
 #include "CoreLooper.h"
 #include "Scene.h"
 
-
-
-
 class Application
 {
 public:

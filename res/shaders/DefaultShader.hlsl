@@ -5,28 +5,76 @@
 "COLOR" for RGBA data given to a shader
 "SV_TARGET" for writting from a pixel shader to a target texture
 */
-#define NUMBER_OF_POINT_LIGHTS 7
+
+struct DirectionalLight
+{
+    float4 Ambient;
+    float4 Diffuse;
+    float4 Specular;
+    
+    float3 Direction;
+    float packing;
+};
+
+struct PointLight
+{
+    float4 Ambient;
+    float4 Diffuse;
+    float4 Specular;
+    
+    float3 Position;
+    float Range;
+    
+    float3 Attenuation;
+    float packing;
+};
+
+struct SpotLight
+{
+    float4 Ambient;
+    float4 Diffuse;
+    float4 Specular;
+    
+    float3 Position;
+    float Range;
+    
+    float3 Direction;
+    float Spot;
+    
+    float3 Attenuation;
+    float packing;
+};
+
+struct Material
+{
+    float4 Ambient;
+    float4 Diffuse;
+    float4 Specular; // w = SpecPower
+    float4 Reflect;
+};
+
 
 Texture2D texture0; 
 SamplerState sampler0;
 
 
 
-
-
-
 cbuffer PerObjectBUFFER
 {
     matrix WVPMatrix;
-    
+    matrix WorldMatrix;
+    matrix WorldInvTranspose;
+    Material gMaterial;
 };
 
 cbuffer PerFrameBUFFER
 {
-    float4 packing; 
+    DirectionalLight gDirLight;
+    float3 gEyePosW;
+    float packing;
 };
 
-
+void CalculateDirectionalLight(Material mat, DirectionalLight L, float3 normal, float3 toEye, out float4 ambient, out float4 diffuse, out float4 spec);
 
 struct VS_INPUT
 {
@@ -38,6 +86,7 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 vPos : SV_Position;
+    float3 Pos : POSITION;
     float2 texcoord : TEXCOORD;
     float3 normal : NORMAL;
 };
@@ -48,24 +97,98 @@ struct VS_OUTPUT
 VS_OUTPUT VShader(VS_INPUT input) //Vertex shader
 {
     VS_OUTPUT output;
-
+    
+    //Transform to world space space
+    output.Pos = mul(float4(input.vPos), WorldMatrix).xyz;
+    output.normal = mul(input.normal, (float3x3) WorldInvTranspose);
+    
+    //Transform to homogeneous clip space
     output.vPos = mul(WVPMatrix, input.vPos);
+    
     output.texcoord = input.texcoord;
     
-
-
     return output;
+    
+   // 
+   // VS_OUTPUT output;
+   //
+   // output.vPos = mul(WVPMatrix, input.vPos);
+   // output.texcoord = input.texcoord;
+   // 
+   //
+   //
+   // return output;
 }
 
 //Executed for each pixel in a render target. Receives rasterized coordinates from previous shader stage. Returns a 4-component value for that pixel position (color)
 float4 PShader (VS_OUTPUT vertex) : SV_Target
 {
-
+    
+    //Interpolating normal can unnormalize it, so normalize it
+    vertex.normal = normalize(vertex.normal);
+    
+    float3 toEyeW = normalize(gEyePosW - vertex.Pos);
+    
+    //Start with a sum of zero
+    float4 ambient  = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 diffuse  = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 spec     = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    
+    //Sum the light contribution from each light source
+    float4 A, D, S;
+    
+    CalculateDirectionalLight(gMaterial, gDirLight, vertex.normal, toEyeW, A, D, S);
+    ambient += A;
+    diffuse += D;
+    spec    += S;
+    
+    float4 litColour = ambient + diffuse + spec;
+    
+    //Common to take alpha from diffuse material
+    litColour.a = gMaterial.Diffuse.a;
+    
 	float4 color = texture0.Sample(sampler0, vertex.texcoord); //Apply texture to object
     
+    return color * litColour;
     
-    return color;
+    //float4 color = texture0.Sample(sampler0, vertex.texcoord); //Apply texture to object
     
+    
+    //return color;
+    
+}
+
+void CalculateDirectionalLight(Material mat, DirectionalLight L, float3 normal, float3 toEye, out float4 ambient, out float4 diffuse, out float4 spec)
+{
+    //Init outputs
+    ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    spec = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    
+    //The light vector aims opposite the direction the light rays travel
+    float3 lightVec = -L.Direction;
+    
+    //Add ambient term
+    ambient = mat.Ambient * L.Ambient;
+    
+    //Add diffuse and specular, provided the surface is in the line of site of the light
+    float diffuseFactor = dot(lightVec, normal);
+    
+    //Flatten to avoid dynamic branching
+    
+    if (diffuseFactor > 0.0f)
+    {
+        float3 v = reflect(-lightVec, normal);
+        float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
+        
+        diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
+        spec = specFactor * mat.Specular * L.Specular;
+
+    }
+    
+    
+    
+
 }
 
 

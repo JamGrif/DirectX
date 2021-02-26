@@ -1,5 +1,7 @@
 #include "EngineStatics.h"
 
+//Static variable definitions used to establish the need for a piece of memory, which the compiler then reserves
+
 HWND* EngineStatics::m_hWnd									= nullptr;
 HINSTANCE* EngineStatics::m_hInst							= nullptr;
 

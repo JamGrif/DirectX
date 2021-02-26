@@ -10,17 +10,36 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
+#include "Renderer.h"
+
+struct Material
+{
+	Material() { ZeroMemory(this, sizeof(this)); }
+
+	//Default
+	XMFLOAT4 Ambient = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+	XMFLOAT4 Diffuse = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+	XMFLOAT4 Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f); // w = SpecPower
+	XMFLOAT4 Reflect;
+};
 
 //CB must be multiple of 16
 struct PerObject_CONSTANT_BUFFER
 {
 	XMMATRIX WorldViewProjection; //64 bytes
+	XMMATRIX WorldMatrix;
+	XMMATRIX WorldInvTransposeMatrix;
+	Material material;
 };
 
 struct PerFrame_CONSTANT_BUFFER
 {
-	XMFLOAT4 packing;
+	DirectionalLight DirLight;
+	XMFLOAT3 position;
+	float packing;
 };
+
+
 
 class Mesh 
 {
@@ -74,7 +93,7 @@ private:
 	ID3D11Buffer* m_pcbPerObject;
 	ID3D11Buffer* m_pcbPerFrame;
 
-	ID3D11ShaderResourceView* m_pTexture;
+	ID3D11ShaderResourceView* m_pLocalTexture;
 	ID3D11SamplerState* m_pSampler;
 	PerObject_CONSTANT_BUFFER	m_object_cb_values;
 	PerFrame_CONSTANT_BUFFER	m_frame_cb_values;
@@ -90,6 +109,9 @@ private:
 	//Mesh
 	ID3D11Buffer* m_pVertexBuffer;
 	unsigned int numverts;
+
+	//Material
+	Material meshMaterial;
 
 	
 };

@@ -55,6 +55,12 @@ void Camera::Strafe(float distance)
 	m_z += XMVectorGetZ(right) * distance;
 }
 
+XMFLOAT3 Camera::GetPosition()
+{
+	XMFLOAT3 pos = { m_x, m_y, m_z };
+	return pos;
+}
+
 XMMATRIX Camera::GetViewMatrix()
 {
 	m_dx = float(sin(YAW * (XM_PI / 180.0)) * cos(PITCH * (XM_PI / 180.0)));
