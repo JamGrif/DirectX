@@ -17,6 +17,8 @@ struct DirectionalLight
 		Direction.x = x;
 		Direction.y = y;
 		Direction.z = z;
+
+		Packing = 0;
 	}
 	
 	//Default 
@@ -95,7 +97,7 @@ private:
 
 	PointLight* pointLight;
 
-	DirectionalLight* directionalLight; //Scene can only have one directional light
+	DirectionalLight* directionalLight = nullptr; //Scene can only have one directional light
 
 
 };

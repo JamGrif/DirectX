@@ -24,10 +24,18 @@ void LightManager::CreatePointLight(float x, float y, float z)
 
 void LightManager::CreateDirectionalLight(float x, float y, float z)
 {
-	if (directionalLight == nullptr)
-	{
-		directionalLight = new DirectionalLight(x, y, z);
-	}
+	directionalLight = new DirectionalLight(x, y, z);
+	directionalLight->Ambient = { 0.2f, 0.2f, 0.2f, 1.0f };
+	directionalLight->Diffuse = { 0.5f, 0.5f, 0.5f, 1.0f };
+	directionalLight->Specular = { 0.5f, 0.5f, 0.5f, 1.0f };
+	//if (directionalLight == nullptr)
+	//{
+	//	directionalLight = new DirectionalLight(x, y, z);
+	//	directionalLight->Ambient = {0.2f, 0.2f, 0.2f, 1.0f};
+	//	directionalLight->Diffuse = { 0.5f, 0.5f, 0.5f, 1.0f };
+	//	directionalLight->Specular = { 0.5f, 0.5f, 0.5f, 1.0f };
+	//
+	//}
 }
 
 
@@ -42,10 +50,11 @@ PointLight* LightManager::GetPointLight()
 
 DirectionalLight* LightManager::GetDirectionalLight()
 {
-	if (directionalLight != nullptr)
-	{
-		return directionalLight;
-	}
-
-	return nullptr;
+	return directionalLight;
+	//if (directionalLight != nullptr)
+	//{
+	//	return directionalLight;
+	//}
+	//
+	//return nullptr;
 }
