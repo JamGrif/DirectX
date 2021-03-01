@@ -7,7 +7,7 @@ Scene::Scene()
 
 	lightmanager = new LightManager();
 	EngineStatics::SetLightManager(lightmanager);
-	lightmanager->CreateDirectionalLight(0.0, 0.0, -1.0);
+	lightmanager->CreateDirectionalLight(1.0, 0.0, 0.0);
 	//lightmanager->CreatePointLight(0.0f, -3.0f, -4.0f);
 
 
@@ -40,6 +40,8 @@ Scene::Scene()
 	pointy->SetXScale(1.5);
 	pointy->SetYScale(1.5);
 	pointy->SetZScale(1.5);
+	//pointy->SetXRot(45);
+	//pointy->SetYRot(45);
 
 	//sceneMeshes.push_back(test1 = new Mesh());
 	//test1->AddTexture((char*)"res/textures/example.png");
@@ -108,6 +110,8 @@ void Scene::UpdateScene()
 	//if (pointy != nullptr) { pointy->Update();  }
 	//if (pointy != nullptr) { pointy->Update(); pointy->IncXRot(150 * EngineStatics::GetGameTimer()->DeltaTime()); pointy->IncYRot(-150 * EngineStatics::GetGameTimer()->DeltaTime()); }
 	//if (pointy != nullptr) { pointy->Update();  }
+
+	//sphere->IncYRot(150 * EngineStatics::GetGameTimer()->DeltaTime());
 
 	
 	

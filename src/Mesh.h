@@ -17,9 +17,9 @@ struct Material
 	Material() { ZeroMemory(this, sizeof(this)); }
 
 	//Default
-	XMFLOAT4 Ambient = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
-	XMFLOAT4 Diffuse = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
-	XMFLOAT4 Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f); // w = SpecPower
+	XMFLOAT4 Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	XMFLOAT4 Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	XMFLOAT4 Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 8.0f); // w = SpecPower
 	XMFLOAT4 Reflect;
 };
 

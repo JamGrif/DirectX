@@ -47,17 +47,17 @@ void Mesh::Draw()
 	world = scale * rotation * translation;
 
 	//Required after world_transform for lighting
-	//XMMATRIX transpose;
-	//transpose = XMMatrixTranspose(world);
-	//
-	//XMVECTOR determinant; //Inverse function returns determinant, bit it isnt used
-	//XMMATRIX inverse;
-	//inverse = XMMatrixInverse(&determinant, world);
+	XMMATRIX transpose;
+	transpose = XMMatrixTranspose(world);
+	
+	XMVECTOR determinant; //Inverse function returns determinant, bit it isnt used
+	XMMATRIX inverse;
+	inverse = XMMatrixInverse(&determinant, world);
 
-	XMMATRIX A = world;
-	A.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	XMVECTOR det = XMMatrixDeterminant(A);
-	XMMATRIX inverse = XMMatrixTranspose(XMMatrixInverse(&det, A));
+	//XMMATRIX A = world;
+	//A.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	//XMVECTOR det = XMMatrixDeterminant(A);
+	//XMMATRIX inverse = XMMatrixTranspose(XMMatrixInverse(&det, A));
 
 
 	m_pLocalContext->IASetInputLayout(m_currentInputLayout); // Bind input layout to device
@@ -79,7 +79,7 @@ void Mesh::Draw()
 	memcpy(ms.pData, &m_object_cb_values, sizeof(PerObject_CONSTANT_BUFFER));		//Copy data in	
 	m_pLocalContext->Unmap(m_pcbPerObject, NULL);									//Unlock buffer
 	m_pLocalContext->VSSetConstantBuffers(0, 1, &m_pcbPerObject);					//Set the constant buffer
-	//m_pLocalContext->PSSetConstantBuffers(0, 1, &m_pcbPerObject);
+	m_pLocalContext->PSSetConstantBuffers(0, 1, &m_pcbPerObject);
 
 	D3D11_MAPPED_SUBRESOURCE ms2;
 	//Update and set FRAME constant buffer 
@@ -87,7 +87,7 @@ void Mesh::Draw()
 	memcpy(ms2.pData, &m_frame_cb_values, sizeof(PerFrame_CONSTANT_BUFFER));
 	m_pLocalContext->Unmap(m_pcbPerFrame, NULL);
 	m_pLocalContext->VSSetConstantBuffers(1, 1, &m_pcbPerFrame);
-	//m_pLocalContext->PSSetConstantBuffers(1, 1, &m_pcbPerObject);
+	m_pLocalContext->PSSetConstantBuffers(1, 1, &m_pcbPerFrame);
 	//Map / Unmap is required for D3D11_USAGE_DYNAMIC
 
 
@@ -120,7 +120,7 @@ HRESULT Mesh::AddTexture(char* filename)
 	//}
 	
 
-	std::string test = "hello";
+	//std::string test = "hello";
 	
 	//hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, test.c_str(), NULL, NULL, &m_pTexture, NULL);
 	hr = D3DX11CreateShaderResourceViewFromFile(m_pLocalDevice, filename, NULL, NULL, &m_pLocalTexture, NULL);

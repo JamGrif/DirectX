@@ -11,7 +11,6 @@ struct DirectionalLight
     float4 Ambient;
     float4 Diffuse;
     float4 Specular;
-    
     float3 Direction;
     float packing;
 };
@@ -75,20 +74,22 @@ cbuffer PerFrameBUFFER
 };
 
 void CalculateDirectionalLight(Material mat, DirectionalLight L, float3 normal, float3 toEye, out float4 ambient, out float4 diffuse, out float4 spec);
+void CalculatePointLight(Material mat, PointLight L, float3 pos, float3 normal, float3 toEye, out float4 ambient, out float4 diffuse, out float4 spec);
+void CalculateSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, float3 toEye, out float4 ambient, out float4 diffuse, out float4 spec);
 
 struct VS_INPUT
 {
-    float4 vPos : POSITION;
+    float3 PosL : POSITION;
     float2 texcoord : TEXCOORD;
-    float3 normal : NORMAL;
+    float3 NormalL : NORMAL;
 };
 
 struct VS_OUTPUT
 {
-    float4 vPos : SV_Position;
-    float3 Pos : POSITION;
+    float4 PosH : SV_Position;
+    float3 PosW : POSITION;
     float2 texcoord : TEXCOORD;
-    float3 normal : NORMAL;
+    float3 NormalW : NORMAL;
 };
 
 
@@ -99,11 +100,11 @@ VS_OUTPUT VShader(VS_INPUT input) //Vertex shader
     VS_OUTPUT output;
     
     //Transform to world space space
-    output.Pos = mul(float4(input.vPos), WorldMatrix).xyz;
-    output.normal = mul(input.normal, (float3x3) WorldInvTranspose);
+    output.PosW = mul(float4(input.PosL, 1.0f), WorldMatrix).xyz;
+    output.NormalW = mul(input.NormalL, (float3x3) WorldInvTranspose);
     
     //Transform to homogeneous clip space
-    output.vPos = mul(WVPMatrix, input.vPos);
+    output.PosH = mul(WVPMatrix, float4(input.PosL, 1.0f));
     
     output.texcoord = input.texcoord;
     
@@ -125,9 +126,9 @@ float4 PShader (VS_OUTPUT vertex) : SV_Target
 {
     
     //Interpolating normal can unnormalize it, so normalize it
-    vertex.normal = normalize(vertex.normal);
+    vertex.NormalW = normalize(vertex.NormalW);
     
-    float3 toEyeW = normalize(gEyePosW - vertex.Pos);
+    float3 toEyeW = normalize(gEyePosW - vertex.PosW);
     
     //Start with a sum of zero
     float4 ambient  = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -137,7 +138,7 @@ float4 PShader (VS_OUTPUT vertex) : SV_Target
     //Sum the light contribution from each light source
     float4 A, D, S;
     
-    CalculateDirectionalLight(gMaterial, gDirLight, vertex.normal, toEyeW, A, D, S);
+    CalculateDirectionalLight(gMaterial, gDirLight, vertex.NormalW, toEyeW, A, D, S);
     ambient += A;
     diffuse += D;
     spec    += S;
@@ -147,9 +148,9 @@ float4 PShader (VS_OUTPUT vertex) : SV_Target
     //Common to take alpha from diffuse material
     litColour.a = gMaterial.Diffuse.a;
     
-	float4 color = texture0.Sample(sampler0, vertex.texcoord); //Apply texture to object
+	//float4 color = texture0.Sample(sampler0, vertex.texcoord); //Apply texture to object
     
-    return color * litColour;
+    return litColour;
     
     //float4 color = texture0.Sample(sampler0, vertex.texcoord); //Apply texture to object
     
@@ -175,7 +176,7 @@ void CalculateDirectionalLight(Material mat, DirectionalLight L, float3 normal, 
     float diffuseFactor = dot(lightVec, normal);
     
     //Flatten to avoid dynamic branching
-    
+    [flatten]
     if (diffuseFactor > 0.0f)
     {
         float3 v = reflect(-lightVec, normal);
